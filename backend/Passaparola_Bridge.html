@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Connessione Passaparola</title>
+</head>
+<body>
+<script>
+(function () {
+  'use strict';
+  var allowedParent = 'https://isottabdv2301.github.io';
+
+  function send(message) {
+    window.parent.postMessage(message, allowedParent);
+  }
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window.parent || event.origin !== allowedParent) return;
+    var request = event.data;
+    if (!request || request.type !== 'passaparola-request' || typeof request.id !== 'string') return;
+
+    google.script.run
+      .withSuccessHandler(function (payload) {
+        send({ type: 'passaparola-response', id: request.id, payload: payload });
+      })
+      .withFailureHandler(function (error) {
+        send({
+          type: 'passaparola-response',
+          id: request.id,
+          error: error && error.message ? String(error.message) : 'Il backend Passaparola ha restituito un errore.'
+        });
+      })
+      .apiBridgeRequest(request.payload || {});
+  });
+
+  send({ type: 'passaparola-ready' });
+})();
+</script>
+</body>
+</html>
