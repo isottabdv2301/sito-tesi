@@ -13,11 +13,11 @@
   var allowedParent = 'https://isottabdv2301.github.io';
 
   function send(message) {
-    window.parent.postMessage(message, allowedParent);
+    window.top.postMessage(message, allowedParent);
   }
 
   window.addEventListener('message', function (event) {
-    if (event.source !== window.parent || event.origin !== allowedParent) return;
+    if (event.source !== window.top || event.origin !== allowedParent) return;
     var request = event.data;
     if (!request || request.type !== 'passaparola-request' || typeof request.id !== 'string') return;
 
