@@ -153,7 +153,7 @@ function renderPlayer(player: Player | null): void {
   playerView.hidden = !player;
   if (!player) return;
   $("player-id").textContent = player.id;
-  $("private-code").value = key;
+  ($("private-code") as HTMLInputElement).value = key;
   ["waiting", "complete", "excluded", "review"].forEach((name) => {
     $(`${name}-view`).hidden = player.status !== name.toUpperCase();
   });
@@ -163,7 +163,7 @@ function renderPlayer(player: Player | null): void {
   if (player.status === "COMPLETE") {
     $("points").textContent = String(player.points);
     $("position").textContent = player.rank ? `#${player.rank}` : "—";
-    $("share-link").value = player.referralUrl;
+    ($("share-link") as HTMLInputElement).value = player.referralUrl;
     const message = "Ti va di partecipare a una ricerca universitaria? Il questionario richiede circa 10–12 minuti. ";
     $("whatsapp").setAttribute("href", `https://wa.me/?text=${encodeURIComponent(message + player.referralUrl)}`);
     $("telegram").setAttribute("href", `https://t.me/share/url?url=${encodeURIComponent(player.referralUrl)}&text=${encodeURIComponent(message)}`);
