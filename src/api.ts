@@ -69,6 +69,46 @@ function toError(value: unknown, fallback: string): Error {
   return new Error(fallback);
 }
 
+/** Apps Script avvolge la pagina HTML in più iframe. Attraversa l'albero
+ * dei frame per consegnare la richiesta al documento HTML del bridge. */
+function bridgeFrameWindows(): Window[] {
+  const root = bridgeFrame?.contentWindow;
+  if (!root) return [];
+  const result: Window[] = [];
+  const queue: Window[] = [root];
+  const seen = new Set<Window>();
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (seen.has(current)) continue;
+    seen.add(current);
+    result.push(current);
+    try {
+      for (let i = 0; i < current.frames.length; i++) queue.push(current.frames[i]);
+    } catch {
+      // A frame that cannot be inspected is skipped; other descendants remain usable.
+    }
+  }
+  return result;
+}
+
+function isBridgeFrameSource(source: MessageEventSource | null): boolean {
+  if (!source) return false;
+  return bridgeFrameWindows().some((frame) => (frame as unknown) === source);
+}
+
+function postToBridgeFrames(message: unknown): void {
+  if (!bridgeOrigin) throw new Error("Connessione al backend non pronta.");
+  const frames = bridgeFrameWindows();
+  if (!frames.length) throw new Error("Frame del backend non disponibile.");
+  frames.forEach((frame) => {
+    try {
+      frame.postMessage(message, bridgeOrigin);
+    } catch {
+      // Different Apps Script wrapper frames can have different origins.
+    }
+  });
+}
+
 function parsePayload(payload: unknown): ApiState {
   if (!payload || typeof payload !== "object") throw new Error("Risposta del backend non valida.");
   const body = payload as ApiState & ApiErrorPayload;
@@ -90,7 +130,7 @@ function failBridge(error: Error): void {
 }
 
 function onBridgeMessage(event: MessageEvent<BridgeResponse>): void {
-  if (!bridgeFrame || event.source !== bridgeFrame.contentWindow || !isAppsScriptOrigin(event.origin)) return;
+  if (!bridgeFrame || !isBridgeFrameSource(event.source) || !isAppsScriptOrigin(event.origin)) return;
   const message = event.data;
   if (!message || typeof message !== "object") return;
 
@@ -168,7 +208,7 @@ async function request(payload: Record<string, unknown>): Promise<ApiState> {
     }, 30000);
     pending.set(id, { resolve, reject, timer });
     try {
-      bridgeFrame!.contentWindow!.postMessage({ type: "passaparola-request", id, payload }, bridgeOrigin);
+      postToBridgeFrames({ type: "passaparola-request", id, payload });
     } catch (error) {
       window.clearTimeout(timer);
       pending.delete(id);
