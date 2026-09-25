@@ -43,7 +43,7 @@ interface PendingRequest {
 }
 
 const configuredUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
-export const API_URL = configuredUrl || "https://script.google.com/macros/s/AKfycbxb4mKFseUXTiV3Ms4LmcccD8RjfdrOj2BY1ZJlBuqlCmEvEEKhu6k0OHZqxUFKn2tg/exec";
+export const API_URL = configuredUrl || "https://script.google.com/macros/s/AKfycbwcyHebHDURQBfilKiCUBTbPFIpkS4-2GbPAH1Rlx8_XgR4FcNoee6mRWNDjw3wk_CJLw/exec";
 
 let bridgeFrame: HTMLIFrameElement | null = null;
 let bridgeOrigin = "";
