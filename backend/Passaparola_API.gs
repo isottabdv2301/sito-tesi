@@ -33,8 +33,7 @@ function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
   if (String(params.bridge || '') === '1') {
     return HtmlService.createHtmlOutputFromFile('Passaparola_Bridge')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-      .addMetaTag('referrer', 'no-referrer');
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
   return spaApiResponse_(spaApiHandle_(params), params.callback || '');
 }
