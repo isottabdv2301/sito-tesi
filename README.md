@@ -7,7 +7,9 @@ Il repository viene pubblicato automaticamente su GitHub Pages dal workflow
 
 ## Contratto backend
 
-La SPA chiama un Web App Apps Script tramite queste operazioni:
+La SPA comunica con la Web App Apps Script tramite un iframe nascosto e `google.script.run`. Questo evita che il browser blocchi la risposta per CORS, come accade con `fetch` diretto da GitHub Pages. L'iframe accetta messaggi solo dall'origine pubblica del sito.
+
+Il backend espone queste operazioni:
 
 - `GET ?api=board` per la classifica pubblica;
 - `POST {"action":"join","key":"...","referral":"..."}` per creare l'accesso;
@@ -34,7 +36,9 @@ npm run dev
 npm run build
 ```
 
-Il valore di `VITE_API_URL` deve essere un endpoint raggiungibile dal browser e con CORS configurato. Il Web App Apps Script resta il backend autorizzato a leggere e scrivere il Google Sheet. Non inserire credenziali Google nella SPA.
+`VITE_API_URL` è l'URL `/exec` della Web App Apps Script. La SPA lo apre come iframe e il foglio resta privato; non inserire credenziali Google nella SPA.
+
+Nel progetto Apps Script devono essere presenti anche `Passaparola_API.gs` e `Passaparola_Bridge.html`. Il bridge viene servito da `doGet?bridge=1` e inoltra le richieste con `google.script.run`.
 
 ## Pubblicazione GitHub Pages
 
