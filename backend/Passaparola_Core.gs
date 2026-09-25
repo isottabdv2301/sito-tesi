@@ -1,7 +1,7 @@
 const PP = Object.freeze({
   PREFIX: 'QRT_PP1_',
   API_URL: 'https://script.google.com/macros/s/AKfycbxb4mKFseUXTiV3Ms4LmcccD8RjfdrOj2BY1ZJlBuqlCmEvEEKhu6k0OHZqxUFKn2tg/exec',
-  SPA_URL: 'https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY/',
+  SPA_URL: 'https://isottabdv2301.github.io/sito-tesi/',
   GAME_SHEET_ID: '1kCe_af99n8lk0PjbPeI-1qTlNlSZLxD1xoZrUHQ3_hE',
   TITLE: 'Passaparola · Ricerca Tesi',
   TOKEN_TITLE: 'Codice partecipante Passaparola (precompilato — non modificare)',
@@ -163,6 +163,29 @@ function ppEnsureTrigger_(form) {
 
 function ppNormalize_(text) { return String(text).normalize('NFKC').replace(/\s+/g, ' ').trim(); }
 
+function ppScreeningCheck_(item, yes, no, label) {
+  if (!item || String(item.getType()) !== 'MULTIPLE_CHOICE') throw new Error('Domanda di screening non riconosciuta: ' + label);
+  const mc = item.asMultipleChoiceItem();
+  const yesChoice = mc.getChoices().filter(function(c) { return c.getValue() === yes; });
+  const noChoice = mc.getChoices().filter(function(c) { return c.getValue() === no; });
+  if (yesChoice.length !== 1 || noChoice.length !== 1) throw new Error('Risposte di ammissione modificate: ' + label);
+  const noNavigation = noChoice[0].getPageNavigationType();
+  if (String(noNavigation) !== 'SUBMIT') throw new Error('La risposta negativa deve terminare il questionario: ' + label);
+  const yesNavigation = yesChoice[0].getPageNavigationType();
+  if (yesNavigation !== null && yesNavigation !== undefined && ['CONTINUE', 'GO_TO_PAGE'].indexOf(String(yesNavigation)) < 0) {
+    throw new Error('La risposta positiva non può terminare il questionario: ' + label);
+  }
+  return {id: String(mc.getId()), yes: yes};
+}
+
+function ppIsProseguiPrompt_(item) {
+  if (String(item.getType()) !== 'MULTIPLE_CHOICE') return false;
+  const choices = item.asMultipleChoiceItem().getChoices();
+  if (choices.length !== 1 || ppNormalize_(choices[0].getValue()).toUpperCase() !== 'PROSEGUI') return false;
+  const navigation = choices[0].getPageNavigationType();
+  return navigation === null || navigation === undefined || String(navigation) === 'CONTINUE';
+}
+
 /** Legge soltanto la struttura del modulo. Nessun testo di domanda viene riscritto. */
 function ppInspectForm_(form, props) {
   const items = form.getItems();
@@ -179,19 +202,47 @@ function ppInspectForm_(form, props) {
     throw new Error('Le destinazioni dei 10 percorsi non corrispondono al V6.');
   }
   const lastRoute = Math.max.apply(null, routePages.map(function(p) { return p.getIndex(); }));
-  const common = items.find(function(item) { return item.getIndex() > lastRoute && String(item.getType()) === 'PAGE_BREAK'; });
+  const pageBreaks = items.filter(function(item) { return item.getIndex() > lastRoute && String(item.getType()) === 'PAGE_BREAK'; });
+  const questionTypes = ['TEXT', 'PARAGRAPH_TEXT', 'MULTIPLE_CHOICE', 'LIST', 'CHECKBOX', 'SCALE', 'GRID', 'CHECKBOX_GRID', 'DATE', 'DATETIME', 'TIME', 'DURATION'];
+  let common = null;
+  for (let i = 0; i < pageBreaks.length; i++) {
+    const start = pageBreaks[i].getIndex();
+    const end = i + 1 < pageBreaks.length ? pageBreaks[i + 1].getIndex() : Infinity;
+    const startsSurveyQuestions = items.some(function(item) {
+      const type = String(item.getType());
+      return item.getIndex() > start && item.getIndex() < end && questionTypes.indexOf(type) >= 0 && !ppIsProseguiPrompt_(item);
+    });
+    if (startsSurveyQuestions) { common = pageBreaks[i]; break; }
+  }
   if (!common) throw new Error('Sezione delle valutazioni comuni non trovata.');
-  const checks = [
-    ['Hai almeno 18 anni?', 'Sì'],
-    ['Vivi stabilmente in Italia o hai trascorso qui la maggior parte della tua vita?', 'Sì'],
-    ['Acconsenti volontariamente a partecipare alla ricerca?', 'Sì, acconsento']
-  ].map(function(pair) {
-    const matches = items.filter(function(item) { return ppNormalize_(item.getTitle()) === ppNormalize_(pair[0]); });
-    if (matches.length !== 1 || String(matches[0].getType()) !== 'MULTIPLE_CHOICE') throw new Error('Domanda di screening non riconosciuta: ' + pair[0]);
-    const mc = matches[0].asMultipleChoiceItem();
-    if (!mc.getChoices().some(function(c) { return c.getValue() === pair[1]; })) throw new Error('Risposta di ammissione modificata: ' + pair[0]);
-    return {id: String(mc.getId()), yes: pair[1]};
+
+  const residenceTitle = 'Vivi stabilmente in Italia o hai trascorso qui la maggior parte della tua vita?';
+  const residenceItems = items.filter(function(item) { return ppNormalize_(item.getTitle()) === ppNormalize_(residenceTitle); });
+  if (residenceItems.length !== 1) throw new Error('Domanda di screening non riconosciuta: ' + residenceTitle);
+  const combinedConsent = items.filter(function(item) {
+    if (String(item.getType()) !== 'MULTIPLE_CHOICE' || !/almeno\s+18\s+anni/i.test(ppNormalize_(item.getTitle()))) return false;
+    const values = item.asMultipleChoiceItem().getChoices().map(function(c) { return ppNormalize_(c.getValue()); });
+    return values.indexOf('Acconsento') >= 0 && values.indexOf('Non acconsento') >= 0;
   });
+  let checks;
+  if (combinedConsent.length === 1) {
+    checks = [
+      ppScreeningCheck_(combinedConsent[0], 'Acconsento', 'Non acconsento', 'consenso e maggiore età'),
+      ppScreeningCheck_(residenceItems[0], 'Sì', 'No', residenceTitle)
+    ];
+  } else if (combinedConsent.length > 1) {
+    throw new Error('Sono presenti più domande che combinano consenso e maggiore età.');
+  } else {
+    checks = [
+      ['Hai almeno 18 anni?', 'Sì', 'No'],
+      [residenceTitle, 'Sì', 'No'],
+      ['Acconsenti volontariamente a partecipare alla ricerca?', 'Sì, acconsento', 'No']
+    ].map(function(pair) {
+      const matches = items.filter(function(item) { return ppNormalize_(item.getTitle()) === ppNormalize_(pair[0]); });
+      if (matches.length !== 1) throw new Error('Domanda di screening non riconosciuta: ' + pair[0]);
+      return ppScreeningCheck_(matches[0], pair[1], pair[2], pair[0]);
+    });
+  }
   const required = [];
   items.forEach(function(item) {
     const type = String(item.getType());
@@ -210,7 +261,7 @@ function ppInspectForm_(form, props) {
       return navigation !== null && String(navigation) !== 'CONTINUE';
     })) throw new Error('Diramazione inattesa in una domanda delle valutazioni comuni.');
     // Le sezioni di stimolo V6 non contengono domande: fermarsi se la struttura cambia.
-    if (item.getIndex() > routing.getIndex() && item.getIndex() < common.getIndex()) {
+    if (item.getIndex() > routing.getIndex() && item.getIndex() < common.getIndex() && !ppIsProseguiPrompt_(item)) {
       throw new Error('È stata aggiunta una domanda nei percorsi sperimentali. Occorre adattare la verifica degli invii.');
     }
     if (afterCommon && q.isRequired()) {
