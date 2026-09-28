@@ -1,6 +1,9 @@
 import "./styles.css";
 import { getBoard, getStatus, joinGame, type ApiState, type Player } from "./api";
 
+const SHARE_MESSAGE = "Ciao! ✨Ti chiedo se puoi compilare il mio questionario 🙏🏻\n\nCOME FUNZIONA? ⚙️\n1. Apri il link \n2. Salva il tuo codice\n3. Clicca Compila il questionario \n4. Al termine del questionario troverai un link da condividere \n----> Più persone compileranno il questionario con il tuo link, più salirai in classifica, \nIL PRIMO CLASSIFICATO RICEVERÀ UNA RICOMPENSA 💸💸💸\n\nRICORDATI DI SALVARE IL TUO CODICE COSÌ DA POTER CONTROLLARE IL TUO POSTO IN CLASSIFICA\n\nGrazieeee! 💛";
+const invitationMessage = (url: string): string => `${SHARE_MESSAGE}\n\n${url}`;
+
 const STORAGE_KEY = "passaparola_v6_private_key";
 const referral = new URLSearchParams(window.location.search).get("ref") || "";
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -14,6 +17,7 @@ app.innerHTML = `
       <a class="header-link" href="#classifica">Vai alla classifica</a>
     </header>
     <div class="page-intro"><div><p class="eyebrow">Compila · invita · partecipa</p><h1>Fai crescere la ricerca.</h1></div><p class="small muted">Ogni compilazione da un tuo invito vale 1 punto.</p></div>
+    <div class="notice"><strong>Il primo classificato riceverà una RICOMPENSA 💸💸💸</strong></div>
     <div id="error" class="error" role="alert" hidden></div>
     <div id="storage-note" class="notice" hidden>Questo browser non conserva il tuo accesso. Salva il codice privato prima di aprire il questionario.</div>
     <main class="grid">
@@ -31,8 +35,8 @@ app.innerHTML = `
           <div id="player-view" hidden>
             <div id="player-status" class="status-label"></div>
             <p class="player-code">Il tuo codice pubblico <strong id="player-id" class="mono"></strong></p>
-            <div id="waiting-view" hidden><h2>Il questionario ti aspetta.</h2><p class="subline">Aprilo, invialo e poi torna qui per ricevere il tuo link personale.</p><a id="open-form" class="btn primary full" href="#" target="_blank" rel="noopener noreferrer">Apri il questionario ↗</a><div class="buttons"><button id="verify" type="button" class="btn full">Verifica invio</button></div><p id="verification-note" class="hint">Il link da condividere si sblocca dopo un invio completo e valido.</p></div>
-            <div id="complete-view" hidden><h2>Ora tocca al passaparola.</h2><div class="metric-row"><div><div id="points" class="score">0</div><span>compilazioni dai tuoi inviti</span></div><div><div id="position" class="position">—</div><span>la tua posizione</span></div></div><div class="share"><label for="share-link">Questo è il link da condividere</label><input id="share-link" class="field" type="text" readonly><div class="buttons"><button id="copy-link" class="btn primary" type="button">Copia link</button><a id="whatsapp" class="btn" target="_blank" rel="noopener noreferrer">WhatsApp</a><a id="telegram" class="btn" target="_blank" rel="noopener noreferrer">Telegram</a></div><p class="hint">Condividi il link senza anticipare prodotti o domande.</p></div></div>
+            <div id="waiting-view" hidden><h2>Il questionario ti aspetta.</h2><p class="subline">Aprilo, invialo e poi torna qui per ricevere il tuo link personale.</p><a id="open-form" class="btn primary full" href="#" target="_blank" rel="noopener noreferrer">Compila il questionario ↗</a><div class="buttons"><button id="verify" type="button" class="btn full">Verifica invio</button></div><p id="verification-note" class="hint">Il link da condividere si sblocca dopo un invio completo e valido.</p></div>
+            <div id="complete-view" hidden><h2>Ora tocca al passaparola.</h2><div class="metric-row"><div><div id="points" class="score">0</div><span>compilazioni dai tuoi inviti</span></div><div><div id="position" class="position">—</div><span>la tua posizione</span></div></div><div class="share"><label for="share-link">Questo è il link da condividere</label><input id="share-link" class="field" type="text" readonly><div class="buttons"><button id="copy-message" class="btn primary" type="button">Copia messaggio e link</button><button id="copy-link" class="btn" type="button">Copia solo link</button><a id="whatsapp" class="btn" target="_blank" rel="noopener noreferrer">WhatsApp</a><a id="telegram" class="btn" target="_blank" rel="noopener noreferrer">Telegram</a></div><p class="hint">Condividi il link senza anticipare prodotti o domande.</p></div></div>
             <div id="excluded-view" hidden><h2>Grazie per il tuo tempo.</h2><p class="subline">La compilazione non soddisfa i criteri di partecipazione. Questo invio non assegna punti.</p></div>
             <div id="review-view" hidden><h2>L’invio richiede una verifica.</h2><p class="subline">Non è stato possibile confermare completezza o percorso. Contatta l’organizzatrice indicando il codice pubblico.</p><button id="review-check" class="btn full" type="button">Controlla di nuovo</button></div>
             <details class="box" id="recovery-code"><summary>Salva il codice privato di recupero</summary><p>Conservalo per ritrovare il profilo da un altro browser. Per invitare usa il link personale.</p><input id="private-code" class="field mono" type="text" readonly aria-label="Codice privato di recupero"><div class="buttons"><button id="copy-code" class="btn" type="button">Copia codice privato</button></div></details>
@@ -164,9 +168,8 @@ function renderPlayer(player: Player | null): void {
     $("points").textContent = String(player.points);
     $("position").textContent = player.rank ? `#${player.rank}` : "—";
     ($("share-link") as HTMLInputElement).value = player.referralUrl;
-    const message = "Ti va di partecipare a una ricerca universitaria? Il questionario richiede circa 10–12 minuti. ";
-    $("whatsapp").setAttribute("href", `https://wa.me/?text=${encodeURIComponent(message + player.referralUrl)}`);
-    $("telegram").setAttribute("href", `https://t.me/share/url?url=${encodeURIComponent(player.referralUrl)}&text=${encodeURIComponent(message)}`);
+    $("whatsapp").setAttribute("href", `https://wa.me/?text=${encodeURIComponent(invitationMessage(player.referralUrl))}`);
+    $("telegram").setAttribute("href", `https://t.me/share/url?url=${encodeURIComponent(player.referralUrl)}&text=${encodeURIComponent(SHARE_MESSAGE)}`);
   }
 }
 
@@ -211,12 +214,33 @@ $("restore-form").addEventListener("submit", async (event) => {
   finally { setBusy(false); }
 });
 
-async function copyField(id: string, message: string): Promise<void> {
-  const field = $(id) as HTMLInputElement; field.focus(); field.select();
-  try { await navigator.clipboard.writeText(field.value); toast(message); }
-  catch { document.execCommand("copy"); toast(message); }
+async function copyText(text: string, message: string): Promise<void> {
+  try {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const temporary = document.createElement("textarea");
+      temporary.value = text;
+      temporary.readOnly = true;
+      temporary.style.position = "fixed";
+      temporary.style.left = "-10000px";
+      document.body.appendChild(temporary);
+      try {
+        temporary.select();
+        if (!document.execCommand("copy")) throw new Error("Copia non riuscita. Usa WhatsApp o Telegram, oppure seleziona e copia il link.");
+      } finally { temporary.remove(); }
+    }
+    toast(message);
+  } catch (error) { showError(error); }
 }
 
+async function copyField(id: string, message: string): Promise<void> {
+  const field = $(id) as HTMLInputElement;
+  await copyText(field.value, message);
+}
+
+$("copy-message").addEventListener("click", () => {
+  if (state?.player?.status === "COMPLETE") void copyText(invitationMessage(state.player.referralUrl), "Messaggio e link copiati.");
+});
 $("copy-link").addEventListener("click", () => void copyField("share-link", "Link copiato."));
 $("copy-code").addEventListener("click", () => void copyField("private-code", "Codice privato copiato."));
 ["verify", "refresh", "review-check"].forEach((id) => $(id).addEventListener("click", () => void refresh(true)));
