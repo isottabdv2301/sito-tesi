@@ -65,7 +65,11 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .025em; }
 .status-label { display: inline-flex; padding: 6px 11px; margin-bottom: 16px; border-radius: 8px; background: #edecff; color: var(--blue); font-size: .8rem; font-weight: 700; }
 .status-label.success { background: #e7f5ce; color: #2d4c0e; }
-.player-code { margin-bottom: 20px; color: var(--muted); font-size: .85rem; }
+.player-code { margin-bottom: 24px; padding: 20px; border: 2px solid var(--blue); border-radius: 15px; background: #efefff; color: var(--ink); font-size: 1.1rem; font-weight: 700; text-align: center; }
+.player-code strong { display: block; margin-top: 8px; color: var(--blue); font-size: clamp(1.25rem, 4vw, 2rem); line-height: 1.3; overflow-wrap: anywhere; }
+.reward-notice { font-size: 1rem; }
+.reward-notice p { margin-top: 10px; }
+#waiting-view h2 { margin-bottom: 22px; }
 .metric-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin: 25px 0; }
 .score { color: var(--blue); font-size: 4.6rem; font-weight: 800; letter-spacing: -.06em; line-height: 1; }
 .position { font-size: 2.7rem; font-weight: 750; letter-spacing: -.05em; line-height: 1.2; }
