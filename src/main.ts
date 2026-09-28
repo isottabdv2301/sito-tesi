@@ -17,31 +17,36 @@ app.innerHTML = `
       <a class="header-link" href="#classifica">Vai alla classifica</a>
     </header>
     <div class="page-intro"><div><p class="eyebrow">Compila · invita · partecipa</p><h1>Fai crescere la ricerca.</h1></div><p class="small muted">Ogni compilazione da un tuo invito vale 1 punto.</p></div>
-    <div class="notice"><strong>Il primo classificato riceverà una RICOMPENSA 💸💸💸</strong></div>
+    <div class="notice reward-notice"><strong>Il primo classificato riceverà una RICOMPENSA 💸💸💸</strong><p>Se il giorno <strong>25 ottobre</strong> vedi che il tuo posto in classifica è il <strong>1°</strong>, contattami alla mail: <a href="mailto:isotta2301@gmail.com"><em>isotta2301@gmail.com</em></a> per riscattare la tua <strong>ricompensa</strong>!</p></div>
     <div id="error" class="error" role="alert" hidden></div>
-    <div id="storage-note" class="notice" hidden>Questo browser non conserva il tuo accesso. Salva il codice privato prima di aprire il questionario.</div>
+    <div id="storage-note" class="notice" hidden>Questo browser non conserva il tuo accesso. Mantieni aperta questa pagina durante la compilazione.</div>
     <main class="grid">
       <div>
         <section class="card main-card" aria-label="La tua partecipazione"><div class="card-pad">
+          <div id="instructions-view">
+            <h2>ISTRUZIONI:</h2>
+            <ol class="steps">
+              <li><span class="step-no" aria-hidden="true">1</span><div>Clicca su <strong>crea il mio accesso</strong> per accedere al questionario</div></li>
+              <li><span class="step-no" aria-hidden="true">2</span><div>Clicca su <strong>compila il questionario</strong> e procedi con la compilazione</div></li>
+              <li><span class="step-no" aria-hidden="true">3</span><div>Al termine della compilazione troverai il <strong>link da condividere</strong> per iniziare a guadagnare punti (ogni questionario completato con il link da te inviato, vale <strong>1 PUNTO</strong>)</div></li>
+              <li><span class="step-no" aria-hidden="true">4</span><div>Monitora la <strong>classifica</strong> per vedere se hai vinto</div></li>
+            </ol>
+          </div>
           <div id="initial-loading" class="loading" role="status">Caricamento della tua partecipazione…</div>
           <div id="join-view" hidden>
             <div id="invitation" class="invited" hidden></div>
-            <h2>Entra nel gioco</h2><p class="subline">Aiuta una ricerca universitaria sulle impressioni relative ai prodotti alimentari.</p>
-            <ol class="steps"><li><span class="step-no">1</span><div><h3>Compila il questionario</h3><p>Circa 10–12 minuti. Rispondi secondo la tua opinione.</p></div></li><li><span class="step-no">2</span><div><h3>Ricevi il tuo link personale</h3><p>Si sblocca dopo la verifica dell’invio.</p></div></li><li><span class="step-no">3</span><div><h3>Invita e sali in classifica</h3><p>Un punto per ogni nuova compilazione completa.</p></div></li></ol>
             <label class="check"><input id="game-consent" type="checkbox"><span>Partecipo a Passaparola: il mio codice e il punteggio compariranno in classifica. Le risposte del questionario restano riservate.</span></label>
             <button id="join" class="btn primary full" type="button">Crea il mio accesso</button>
             <p class="hint">La partecipazione alla ricerca richiede almeno 18 anni e il rispetto dei criteri indicati nel questionario.</p>
           </div>
           <div id="player-view" hidden>
             <div id="player-status" class="status-label"></div>
-            <p class="player-code">Il tuo codice pubblico <strong id="player-id" class="mono"></strong></p>
-            <div id="waiting-view" hidden><h2>Il questionario ti aspetta.</h2><p class="subline">Aprilo, invialo e poi torna qui per ricevere il tuo link personale.</p><a id="open-form" class="btn primary full" href="#" target="_blank" rel="noopener noreferrer">Compila il questionario ↗</a><div class="buttons"><button id="verify" type="button" class="btn full">Verifica invio</button></div><p id="verification-note" class="hint">Il link da condividere si sblocca dopo un invio completo e valido.</p></div>
+            <p class="player-code">Il tuo codice pubblico è <strong id="player-id" class="mono"></strong></p>
+            <div id="waiting-view" hidden><h2>Il questionario ti aspetta.</h2><a id="open-form" class="btn primary full" href="#" target="_blank" rel="noopener noreferrer">Compila il questionario ↗</a><div class="buttons"><button id="verify" type="button" class="btn full">Verifica invio</button></div><p id="verification-note" class="hint">Il link da condividere si sblocca dopo un invio completo e valido.</p></div>
             <div id="complete-view" hidden><h2>Ora tocca al passaparola.</h2><div class="metric-row"><div><div id="points" class="score">0</div><span>compilazioni dai tuoi inviti</span></div><div><div id="position" class="position">—</div><span>la tua posizione</span></div></div><div class="share"><label for="share-link">Questo è il link da condividere</label><input id="share-link" class="field" type="text" readonly><div class="buttons"><button id="copy-message" class="btn primary" type="button">Copia messaggio e link</button><a id="whatsapp" class="btn" target="_blank" rel="noopener noreferrer">WhatsApp</a><a id="telegram" class="btn" target="_blank" rel="noopener noreferrer">Telegram</a></div><p class="hint">Condividi il link senza anticipare prodotti o domande.</p></div></div>
             <div id="excluded-view" hidden><h2>Grazie per il tuo tempo.</h2><p class="subline">La compilazione non soddisfa i criteri di partecipazione. Questo invio non assegna punti.</p></div>
             <div id="review-view" hidden><h2>L’invio richiede una verifica.</h2><p class="subline">Non è stato possibile confermare completezza o percorso. Contatta l’organizzatrice indicando il codice pubblico.</p><button id="review-check" class="btn full" type="button">Controlla di nuovo</button></div>
-            <details class="box" id="recovery-code"><summary>Salva il codice privato di recupero</summary><p>Conservalo per ritrovare il profilo da un altro browser. Per invitare usa il link personale.</p><input id="private-code" class="field mono" type="text" readonly aria-label="Codice privato di recupero"><div class="buttons"><button id="copy-code" class="btn" type="button">Copia codice privato</button></div></details>
           </div>
-          <details class="box" id="restore-box"><summary>Hai già partecipato? Recupera il profilo</summary><form id="restore-form"><label class="small" for="restore-code">Codice privato di recupero</label><input id="restore-code" class="field mono" type="text" autocomplete="off" spellcheck="false" placeholder="Incolla il codice salvato" required><div class="buttons"><button id="restore" class="btn" type="submit">Recupera il mio profilo</button></div></form></details>
         </div></section>
         <details class="card rules"><summary>Come vengono contati i punti</summary><ul><li>Un nuovo invio completo dal tuo link vale 1 punto.</li><li>I clic, i duplicati e le uscite anticipate non danno punti.</li><li>Le risposte sul prodotto non modificano il punteggio.</li><li>La classifica mostra soltanto codici pubblici e punti.</li></ul></details>
       </div>
@@ -100,7 +105,6 @@ function saveKey(value: string): void {
     storageNote.hidden = localStorage.getItem(STORAGE_KEY) === value;
   } catch {
     storageNote.hidden = false;
-    $("recovery-code").setAttribute("open", "true");
   }
 }
 
@@ -125,7 +129,7 @@ function toast(message: string): void {
 
 function setBusy(value: boolean): void {
   busy = value;
-  ["join", "verify", "refresh", "restore", "review-check"].forEach((id) => {
+  ["join", "verify", "refresh", "review-check"].forEach((id) => {
     const element = document.getElementById(id) as HTMLButtonElement | null;
     if (element) element.disabled = value;
   });
@@ -153,11 +157,11 @@ function renderBoard(data: ApiState): void {
 
 function renderPlayer(player: Player | null): void {
   initialLoading.hidden = true;
+  $("instructions-view").hidden = Boolean(player);
   joinView.hidden = Boolean(player);
   playerView.hidden = !player;
   if (!player) return;
   $("player-id").textContent = player.id;
-  ($("private-code") as HTMLInputElement).value = key;
   ["waiting", "complete", "excluded", "review"].forEach((name) => {
     $(`${name}-view`).hidden = player.status !== name.toUpperCase();
   });
@@ -200,17 +204,7 @@ $("join").addEventListener("click", async () => {
   if (busy) return;
   if (!( $("game-consent") as HTMLInputElement).checked) { showError(new Error("Se vuoi partecipare, seleziona la casella sopra.")); return; }
   clearError(); setBusy(true);
-  try { if (!key) saveKey(randomKey()); render(await joinGame(key, referral)); $("recovery-code").setAttribute("open", "true"); }
-  catch (error) { showError(error); }
-  finally { setBusy(false); }
-});
-
-$("restore-form").addEventListener("submit", async (event) => {
-  event.preventDefault(); if (busy) return;
-  const candidate = ($("restore-code") as HTMLInputElement).value.trim().toLowerCase();
-  if (!/^[a-f0-9]{64}$/.test(candidate)) { showError(new Error("Il codice privato deve contenere 64 caratteri esadecimali.")); return; }
-  clearError(); setBusy(true);
-  try { const data = await getStatus(candidate); if (!data.player) throw new Error("Codice non riconosciuto."); saveKey(candidate); render(data); toast("Profilo recuperato."); }
+  try { if (!key) saveKey(randomKey()); render(await joinGame(key, referral)); }
   catch (error) { showError(error); }
   finally { setBusy(false); }
 });
@@ -234,15 +228,9 @@ async function copyText(text: string, message: string): Promise<void> {
   } catch (error) { showError(error); }
 }
 
-async function copyField(id: string, message: string): Promise<void> {
-  const field = $(id) as HTMLInputElement;
-  await copyText(field.value, message);
-}
-
 $("copy-message").addEventListener("click", () => {
   if (state?.player?.status === "COMPLETE") void copyText(invitationMessage(state.player.referralUrl), "Messaggio e link copiati.");
 });
-$("copy-code").addEventListener("click", () => void copyField("private-code", "Codice privato copiato."));
 ["verify", "refresh", "review-check"].forEach((id) => $(id).addEventListener("click", () => void refresh(true)));
 document.addEventListener("visibilitychange", () => { if (document.hidden) window.clearTimeout(timer.id); else void refresh(false); });
 void refresh(false);
